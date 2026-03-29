@@ -463,6 +463,11 @@
             <input type="email" id="f-email" name="email" placeholder="your@email.com" autocomplete="email" />
           </div>
 
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="f-contact" name="contact" style="width:18px;height:18px;accent-color:#0D5C4A;cursor:pointer;flex-shrink:0;" />
+            <label for="f-contact" style="margin-bottom:0;cursor:pointer;font-weight:400;font-size:14px;">I'd like someone from the team to follow up with me</label>
+          </div>
+
           <button type="submit" class="btn-submit" id="submitBtn">
             Send Feedback to the Team
           </button>
@@ -507,6 +512,28 @@
     'We were comfortable 🙂',
     'A really good experience 🙌'
   ];
+
+  // ── Session ID (ties star tap → form submit → google click) ──
+  const SESSION_ID = crypto.randomUUID();
+
+  // ── Rating labels (all 5 stars) ───────────────────────────
+  const RATING_LABELS = {
+    1: '⭐ 1 Star',
+    2: '⭐⭐ 2 Stars',
+    3: '⭐⭐⭐ 3 Stars',
+    4: '⭐⭐⭐⭐ 4 Stars',
+    5: '⭐⭐⭐⭐⭐ 5 Stars'
+  };
+
+  // ── Central webhook helper ────────────────────────────────
+  function fireWebhook(payload) {
+    if (!MAKE_WEBHOOK || MAKE_WEBHOOK === 'YOUR_MAKE_WEBHOOK_URL') return;
+    fetch(MAKE_WEBHOOK, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(() => {}); // silent fail — non-blocking
+  }
 
   // ── State ────────────────────────────────────────────────
   let chosen = 0;
@@ -555,6 +582,17 @@
     litStars(n);
     hintEl.textContent = STAR_LABELS[n - 1];
 
+    // Fire star-tap event immediately — captures all ratings incl. anonymous
+    fireWebhook({
+      type:         'star_tap',
+      session_id:   SESSION_ID,
+      rating:       n,
+      rating_label: RATING_LABELS[n],
+      name:         'Anonymous',
+      status:       '🆕 New',
+      submitted_at: new Date().toISOString()
+    });
+
     // Brief pause so the user sees their selection, then route
     setTimeout(() => route(n), 650);
   }
@@ -570,6 +608,12 @@
         progressEl.style.width = '100%';
       });
       setTimeout(() => {
+        // Fire google_click event so Notion records the conversion
+        fireWebhook({
+          type:       'google_click',
+          session_id: SESSION_ID,
+          submitted_at: new Date().toISOString()
+        });
         window.location.href = GOOGLE_URL;
       }, REDIRECT_MS);
 
@@ -593,19 +637,18 @@
 
     // Build payload — Make.com webhook receives this as JSON
     const ratingStars = parseInt(hiddenRatEl.value, 10) || 0;
-    const ratingLabels = {
-      1: '⭐ 1 Star',
-      2: '⭐⭐ 2 Stars',
-      3: '⭐⭐⭐ 3 Stars'
-    };
     const payload = {
-      name:         document.getElementById('f-name').value.trim()  || 'Anonymous',
-      rating:       ratingStars,
-      rating_label: ratingLabels[ratingStars] || (ratingStars + ' Star(s)'),
-      feedback:     document.getElementById('f-feedback').value.trim(),
-      area:         document.getElementById('f-area').value         || 'Other',
-      email:        document.getElementById('f-email').value.trim() || '',
-      submitted_at: new Date().toISOString()
+      type:              'form_submit',
+      session_id:        SESSION_ID,
+      name:              document.getElementById('f-name').value.trim()  || 'Anonymous',
+      rating:            ratingStars,
+      rating_label:      RATING_LABELS[ratingStars] || (ratingStars + ' Star(s)'),
+      feedback:          document.getElementById('f-feedback').value.trim(),
+      area:              document.getElementById('f-area').value         || 'Other',
+      email:             document.getElementById('f-email').value.trim() || '',
+      contact_requested: document.getElementById('f-contact').checked,
+      status:            '🆕 New',
+      submitted_at:      new Date().toISOString()
     };
 
     // If webhook isn't configured yet, show success locally so UX still works
