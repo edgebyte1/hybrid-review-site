@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rate Your Experience — Hybrid Real Estate</title>
+
+  <!--
+  ╔══════════════════════════════════════════════════════════════════════════╗
+  ║  HYBRID REAL ESTATE — CLIENT REVIEW PAGE  (v2)                          ║
+  ║                                                                          ║
+  ║  SETUP CHECKLIST — complete these 3 steps before going live:            ║
+  ║                                                                          ║
+  ║  ① HOSTING (Netlify Drop — free, 60 seconds):                           ║
+  ║     a. Go to https://netlify.com/drop in your browser                  ║
+  ║     b. Drag this HTML file onto the page                                ║
+  ║     c. Netlify gives you a free URL like "amazing-fox-123.netlify.app"  ║
+  ║     d. (Optional) rename it in Netlify settings to something nicer      ║
+  ║     e. Copy that URL — you need it for steps ② and ③                   ║
+  ║                                                                          ║
+  ║  ② MAKE.COM WEBHOOK → NOTION (free, ~5 mins):                           ║
+  ║     This pipes 1–3 star submissions into your Notion database           ║
+  ║     (already created: "⭐ Client Feedback — Hybrid Real Estate")        ║
+  ║                                                                          ║
+  ║     a. Go to https://make.com and create a free account                 ║
+  ║     b. Create a new Scenario                                             ║
+  ║     c. Add trigger: "Webhooks" → "Custom webhook"                       ║
+  ║        → Copy the webhook URL it gives you                              ║
+  ║        → Paste it below replacing YOUR_MAKE_WEBHOOK_URL                 ║
+  ║     d. Add action: "Notion" → "Create a Record"                         ║
+  ║        → Connect your Notion account                                    ║
+  ║        → Select database: "⭐ Client Feedback — Hybrid Real Estate"     ║
+  ║        → Map fields:                                                     ║
+  ║            Client Name  ← {{1.name}}  (or "Anonymous")                  ║
+  ║            Rating       ← {{1.rating_label}}                            ║
+  ║            Feedback     ← {{1.feedback}}                                ║
+  ║            Area         ← {{1.area}}                                    ║
+  ║            Client Email ← {{1.email}}                                   ║
+  ║            Status       ← "🆕 New"  (hardcoded)                         ║
+  ║     e. Turn the scenario ON                                              ║
+  ║                                                                          ║
+  ║  ③ EMAIL TEMPLATE:                                                       ║
+  ║     Open Hybrid_RE_Email_Template.html and replace                      ║
+  ║     YOUR_REVIEW_PAGE_URL (×6) with the Netlify URL from step ①         ║
+  ╚══════════════════════════════════════════════════════════════════════════╝
+  -->
+
+  <style>
+    /* ── Brand Tokens ─────────────────────────────────────── */
+    :root {
+      --emerald:    #0D5C4A;
+      --emerald-dk: #094839;
+      --fezandie:   #4ECBA8;
+      --slate:      #2D3035;
+      --battleship: #8A9099;
+      --mist:       #F2F6F5;
+      --white:      #FFFFFF;
+      --star-gold:  #F5C518;
+      --star-empty: #DDE0DF;
+      --warn-bg:    #FFF8E1;
+      --warn-border:#FFC107;
+      --warn-text:  #7A5C00;
+    }
+
+    /* ── Reset ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--mist);
+      color: var(--slate);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .site-header {
+      background: var(--emerald);
+      padding: 18px 24px;
+      text-align: center;
+    }
+    .logo {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-logo {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.logo .tagline {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+    /* ── Container & Card ─────────────────────────────────── */
+    .container {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 28px 16px 56px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 44px 36px 40px;
+      box-shadow: 0 4px 32px rgba(13,92,74,0.10);
+      text-align: center;
+    }
+
+    /* ── Rating section ───────────────────────────────────── */
+    .rating-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--fezandie);
+      margin-bottom: 10px;
+    }
+    .rating-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--emerald);
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    .rating-subtitle {
+      font-size: 15px;
+      color: var(--battleship);
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+
+    /* ── Stars ────────────────────────────────────────────── */
+    .stars-wrap {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .star {
+      font-size: 52px;
+      cursor: pointer;
+      color: var(--star-empty);
+      transition: color 0.12s ease, transform 0.1s ease;
+      user-select: none;
+      line-height: 1;
+      display: inline-block;
+    }
+    .star:hover  { transform: scale(1.18); }
+    .star.lit    { color: var(--star-gold); }
+
+    .star-hint {
+      font-size: 14px;
+      color: var(--battleship);
+      min-height: 22px;
+      margin-bottom: 4px;
+      transition: opacity 0.2s;
+    }
+
+    /* ── Divider ──────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 1px solid #EEF0EF;
+      margin: 32px 0;
+    }
+
+    /* ── Positive (4–5 star) section ──────────────────────── */
+    #positiveSection { display: none; }
+    .positive-icon { font-size: 60px; margin-bottom: 16px; display: block; }
+    .positive-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--emerald);
+      margin-bottom: 10px;
+    }
+    .positive-body {
+      font-size: 15px;
+      color: var(--battleship);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .btn-google {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--emerald);
+      color: var(--white);
+      text-decoration: none;
+      border-radius: 12px;
+      padding: 15px 28px;
+      font-size: 16px;
+      font-weight: 700;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 4px 16px rgba(13,92,74,0.20);
+    }
+    .btn-google:hover { background: var(--emerald-dk); transform: translateY(-2px); }
+
+    .redirect-box {
+      margin-top: 24px;
+      background: #EEF7F4;
+      border: 1px solid #B6DFD4;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: var(--emerald);
+    }
+    .progress-track {
+      background: #C8E8DF;
+      border-radius: 99px;
+      height: 4px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--emerald);
+      border-radius: 99px;
+      transition: width 5s linear;
+    }
+
+    /* ── Negative (1–3 star) section ──────────────────────── */
+    #negativeSection { display: none; }
+
+    .neg-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--warn-text);
+      margin-bottom: 20px;
+    }
+    .neg-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--slate);
+      margin-bottom: 8px;
+      text-align: left;
+    }
+    .neg-body {
+      font-size: 14px;
+      color: var(--battleship);
+      line-height: 1.7;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    /* ── Form ─────────────────────────────────────────────── */
+    .form-group { margin-bottom: 18px; text-align: left; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate);
+      margin-bottom: 6px;
+    }
+    .form-group .opt {
+      font-weight: 400;
+      color: var(--battleship);
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      border: 1.5px solid #DDE0DF;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--slate);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 3px rgba(13,92,74,0.10);
+    }
+    .form-group textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+
+    .btn-submit {
+      display: block;
+      width: 100%;
+      background: var(--emerald);
+      color: var(--white);
+      border: none;
+      border-radius: 12px;
+      padding: 15px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      font-family: inherit;
+      box-shadow: 0 4px 16px rgba(13,92,74,0.18);
+      margin-top: 8px;
+    }
+    .btn-submit:hover   { background: var(--emerald-dk); transform: translateY(-1px); }
+    .btn-submit:active  { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ── Form Success ─────────────────────────────────────── */
+    #formSuccess { display: none; text-align: center; padding: 16px 0; }
+    .fs-icon  { font-size: 52px; margin-bottom: 14px; display: block; }
+    .fs-title { font-size: 22px; font-weight: 800; color: var(--emerald); margin-bottom: 8px; }
+    .fs-body  { font-size: 14px; color: var(--battleship); line-height: 1.7; }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    .site-footer {
+      text-align: center;
+      padding: 28px 16px;
+      font-size: 12px;
+      color: var(--battleship);
+      line-height: 1.8;
+    }
+    .site-footer a { color: var(--battleship); text-decoration: underline; }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .card  { padding: 32px 20px 28px; }
+      .star  { font-size: 42px; }
+      .rating-title { font-size: 24px; }
+      .positive-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════ HEADER ════════════ -->
+<header class="site-header">
+  <div class="logo">
+    <img
+      src="https://cdn.prod.website-files.com/652e5372d14b6af0be5ee017/652e5372d14b6af0be5ee043_Hybrid_Workmark_Fezandie.png"
+      alt="Hybrid Real Estate"
+      class="header-logo"
+    >
+    <span class="tagline">Client Experience</span>
+  </div>
+</header>
+
+<!-- ════════════ MAIN ════════════ -->
+<main class="container">
+  <div class="card">
+
+    <!-- ── Step 1: Star Rating ─────────────────────────── -->
+    <div id="ratingSection">
+      <p class="rating-eyebrow">Your feedback</p>
+      <h1 class="rating-title">How did we do?</h1>
+      <p class="rating-subtitle">
+        Tap a star below to rate your experience with us.<br>
+        It takes less than 30 seconds.
+      </p>
+
+      <div class="stars-wrap" id="starRow" role="group" aria-label="Star rating">
+        <span class="star" data-v="1" role="button" aria-label="1 star" tabindex="0">★</span>
+        <span class="star" data-v="2" role="button" aria-label="2 stars" tabindex="0">★</span>
+        <span class="star" data-v="3" role="button" aria-label="3 stars" tabindex="0">★</span>
+        <span class="star" data-v="4" role="button" aria-label="4 stars" tabindex="0">★</span>
+        <span class="star" data-v="5" role="button" aria-label="5 stars" tabindex="0">★</span>
+      </div>
+      <p class="star-hint" id="starHint">Tap to rate</p>
+    </div>
+
+    <!-- ── Step 2a: Positive (4–5 stars) ──────────────── -->
+    <div id="positiveSection">
+      <span class="positive-icon">🌟</span>
+      <h2 class="positive-title">We're really happy to hear that!</h2>
+      <p class="positive-body">
+        We pour everything into making every experience feel like home,
+        and hearing that it landed means a lot to our team.
+        <br><br>
+        Would you mind sharing it on Google? It helps others find us
+        when they're looking for their next home.
+      </p>
+      <a id="googleBtn" href="https://g.page/r/CQnkPfXXznBEEBM/review" target="_blank" rel="noopener" class="btn-google">
+        ⭐&nbsp; Leave a Google Review
+      </a>
+      <div class="redirect-box">
+        <span>Redirecting you to Google in 5 seconds…</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Step 2b: Negative (1–3 stars) ──────────────── -->
+    <div id="negativeSection">
+
+      <div class="neg-badge" id="negBadge">
+        <span id="negBadgeStars">★</span>
+        <span id="negBadgeLabel">1 star</span>
+      </div>
+
+      <h2 class="neg-title">We're sorry to hear that your experience was not perfect.</h2>
+      <p class="neg-body">
+        If you feel comfortable, your feedback is important to us and it gives us a chance to improve. 
+      </p>
+
+      <hr class="divider" />
+
+      <!-- Feedback form -->
+      <div id="feedbackFormWrap">
+        <form id="feedbackForm">
+          <!-- Hidden rating — populated by JS when routing -->
+          <input type="hidden" id="hiddenRating" value="" />
+
+          <!-- Name -->
+          <div class="form-group">
+            <label for="f-name">Your name <span class="opt">(optional)</span></label>
+            <input type="text" id="f-name" name="name" placeholder="e.g. Sarah M." autocomplete="name" />
+          </div>
+
+          <!-- Area -->
+          <div class="form-group">
+            <label for="f-area">Which area was this about? <span class="opt">(optional)</span></label>
+            <select id="f-area" name="area">
+              <option value="">Select an area…</option>
+              <option value="Property condition">The property / furnishings</option>
+              <option value="Communication">Communication &amp; responsiveness</option>
+              <option value="Maintenance">Maintenance &amp; repairs</option>
+              <option value="Move-in / Move-out">Move-in or move-out process</option>
+              <option value="Billing">Billing or payments</option>
+              <option value="Other">Something else</option>
+            </select>
+          </div>
+
+          <!-- Feedback -->
+          <div class="form-group">
+            <label for="f-feedback">
+              What could we have done better?
+              <span style="color:#E05252;"> *</span>
+            </label>
+            <textarea
+              id="f-feedback"
+              name="feedback"
+              required
+              placeholder="Tell us about your experience — every detail helps us improve."
+            ></textarea>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="f-email">
+              Your email <span class="opt">(optional — only if you'd like a follow-up)</span>
+            </label>
+            <input type="email" id="f-email" name="email" placeholder="your@email.com" autocomplete="email" />
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">
+            Send Feedback to the Team
+          </button>
+        </form>
+      </div>
+
+      <!-- Success state after submit -->
+      <div id="formSuccess">
+        <span class="fs-icon">💚</span>
+        <h3 class="fs-title">Thank you for being honest with us.</h3>
+        <p class="fs-body">
+          Your feedback helps us improve each day. As such, it has gone directly to our management team for review.  
+          <br><br>
+          We appreciate you giving us the chance to do better.
+        </p>
+      </div>
+
+    </div><!-- /negativeSection -->
+
+  </div><!-- /card -->
+</main>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer class="site-footer">
+  &copy; 2026 Hybrid Real Estate &nbsp;·&nbsp;
+  <a href="https://hybridrealestate.com.au" target="_blank" rel="noopener">hybridrealestate.com.au</a>
+</footer>
+
+
+<!-- ════════════ SCRIPT ════════════ -->
+<script>
+  // ── Config ──────────────────────────────────────────────
+  const GOOGLE_URL     = 'https://g.page/r/CQnkPfXXznBEEBM/review';
+  const MAKE_WEBHOOK   = 'https://hook.eu1.make.com/fk4593xb9kxi0gc9juovbmlg9d122l4v'; // ← paste your Make.com webhook URL here (Step ② above)
+  const FALLBACK_EMAIL = 'team@hybridrealestate.com.au'; // ← update to your team inbox
+  const REDIRECT_MS    = 5000;
+
+  const STAR_LABELS = [
+    'Needs improvement 🔧',
+    'Below our expectations 🫣',
+    'It was okay 😶',
+    'We were comfortable 🙂',
+    'A really good experience 🙌'
+  ];
+
+  // ── State ────────────────────────────────────────────────
+  let chosen = 0;
+
+  // ── DOM refs ─────────────────────────────────────────────
+  const stars       = document.querySelectorAll('.star');
+  const hintEl      = document.getElementById('starHint');
+  const ratingEl    = document.getElementById('ratingSection');
+  const positiveEl  = document.getElementById('positiveSection');
+  const negativeEl  = document.getElementById('negativeSection');
+  const progressEl  = document.getElementById('progressFill');
+  const formEl      = document.getElementById('feedbackForm');
+  const formWrapEl  = document.getElementById('feedbackFormWrap');
+  const successEl   = document.getElementById('formSuccess');
+  const hiddenRatEl = document.getElementById('hiddenRating');
+  const submitBtn   = document.getElementById('submitBtn');
+
+  // ── Star hover & click ────────────────────────────────────
+  function litStars(n) {
+    stars.forEach((s, i) => s.classList.toggle('lit', i < n));
+  }
+
+  stars.forEach(star => {
+    const v = +star.dataset.v;
+
+    star.addEventListener('mouseenter', () => {
+      if (chosen) return;
+      litStars(v);
+      hintEl.textContent = STAR_LABELS[v - 1];
+    });
+    star.addEventListener('mouseleave', () => {
+      if (chosen) return;
+      litStars(0);
+      hintEl.textContent = 'Tap to rate';
+    });
+    star.addEventListener('click', () => pick(v));
+    star.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(v); }
+    });
+  });
+
+  // ── Pick a rating ─────────────────────────────────────────
+  function pick(n) {
+    if (chosen) return;
+    chosen = n;
+    litStars(n);
+    hintEl.textContent = STAR_LABELS[n - 1];
+
+    // Brief pause so the user sees their selection, then route
+    setTimeout(() => route(n), 650);
+  }
+
+  // ── Route based on rating ─────────────────────────────────
+  function route(n) {
+    ratingEl.style.display = 'none';
+
+    if (n >= 4) {
+      positiveEl.style.display = 'block';
+      // Animate progress bar then redirect
+      requestAnimationFrame(() => {
+        progressEl.style.width = '100%';
+      });
+      setTimeout(() => {
+        window.location.href = GOOGLE_URL;
+      }, REDIRECT_MS);
+
+    } else {
+      negativeEl.style.display = 'block';
+      hiddenRatEl.value = n + ' star' + (n > 1 ? 's' : '');
+
+      // Update badge
+      document.getElementById('negBadgeStars').textContent =
+        '★'.repeat(n) + '☆'.repeat(5 - n);
+      document.getElementById('negBadgeLabel').textContent =
+        n + ' star' + (n > 1 ? 's' : '');
+    }
+  }
+
+  // ── Feedback form submit → Make.com webhook → Notion ─────
+  formEl.addEventListener('submit', function (e) {
+    e.preventDefault();
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Sending…';
+
+    // Build payload — Make.com webhook receives this as JSON
+    const ratingStars = parseInt(hiddenRatEl.value, 10) || 0;
+    const ratingLabels = {
+      1: '⭐ 1 Star',
+      2: '⭐⭐ 2 Stars',
+      3: '⭐⭐⭐ 3 Stars'
+    };
+    const payload = {
+      name:         document.getElementById('f-name').value.trim()  || 'Anonymous',
+      rating:       ratingStars,
+      rating_label: ratingLabels[ratingStars] || (ratingStars + ' Star(s)'),
+      feedback:     document.getElementById('f-feedback').value.trim(),
+      area:         document.getElementById('f-area').value         || 'Other',
+      email:        document.getElementById('f-email').value.trim() || '',
+      submitted_at: new Date().toISOString()
+    };
+
+    // If webhook isn't configured yet, show success locally so UX still works
+    if (!MAKE_WEBHOOK || MAKE_WEBHOOK === 'YOUR_MAKE_WEBHOOK_URL') {
+      console.warn('Make.com webhook not configured — submission not sent.');
+      formWrapEl.style.display = 'none';
+      successEl.style.display  = 'block';
+      return;
+    }
+
+    fetch(MAKE_WEBHOOK, {
+      method:  'POST',
+      body:    JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => {
+      if (res.ok || res.status === 200) {
+        formWrapEl.style.display = 'none';
+        successEl.style.display  = 'block';
+      } else {
+        throw new Error('Webhook error ' + res.status);
+      }
+    })
+    .catch(() => {
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Send Feedback to the Team';
+      alert(
+        'Something went wrong — please try again, or email us directly at ' +
+        FALLBACK_EMAIL
+      );
+    });
+  });
+
+  // ── Pre-select from URL param ──────────────────────────────
+  // Emails link to this page as ?rating=4 etc. — this auto-routes them.
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const r = parseInt(params.get('rating'), 10);
+    if (r >= 1 && r <= 5) {
+      // Light up stars visually, then route after a moment
+      litStars(r);
+      hintEl.textContent = STAR_LABELS[r - 1];
+      setTimeout(() => pick(r), 700);
+    }
+  })();
+</script>
+
+</body>
+</html>
