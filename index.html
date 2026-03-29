@@ -604,8 +604,11 @@
     if (n >= 4) {
       positiveEl.style.display = 'block';
       // Animate progress bar then redirect
+      // Double rAF ensures the browser paints the initial 0% state before transitioning
       requestAnimationFrame(() => {
-        progressEl.style.width = '100%';
+        requestAnimationFrame(() => {
+          progressEl.style.width = '100%';
+        });
       });
       setTimeout(() => {
         // Fire google_click event so Notion records the conversion
