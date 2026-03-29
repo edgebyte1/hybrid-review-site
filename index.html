@@ -272,7 +272,7 @@
       font-weight: 400;
       color: var(--battleship);
     }
-    .form-group input,
+    .form-group input:not([type="checkbox"]),
     .form-group textarea,
     .form-group select {
       width: 100%;
@@ -288,7 +288,7 @@
       -webkit-appearance: none;
       appearance: none;
     }
-    .form-group input:focus,
+    .form-group input:not([type="checkbox"]):focus,
     .form-group textarea:focus,
     .form-group select:focus {
       border-color: var(--emerald);
@@ -421,12 +421,6 @@
           <!-- Hidden rating — populated by JS when routing -->
           <input type="hidden" id="hiddenRating" value="" />
 
-          <!-- Name -->
-          <div class="form-group">
-            <label for="f-name">Your name <span class="opt">(optional)</span></label>
-            <input type="text" id="f-name" name="name" placeholder="e.g. Sarah M." autocomplete="name" />
-          </div>
-
           <!-- Area -->
           <div class="form-group">
             <label for="f-area">Which area was this about? <span class="opt">(optional)</span></label>
@@ -453,6 +447,12 @@
               required
               placeholder="Tell us about your experience — every detail helps us improve."
             ></textarea>
+          </div>
+
+          <!-- Name -->
+          <div class="form-group">
+            <label for="f-name">Your name <span class="opt">(optional)</span></label>
+            <input type="text" id="f-name" name="name" placeholder="e.g. Sarah M." autocomplete="name" />
           </div>
 
           <!-- Email -->
